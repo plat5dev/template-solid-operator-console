@@ -1,0 +1,256 @@
+@layer ui-sdk;
+
+@import "tailwindcss";
+
+/*
+ * Design tokens. Paper, ink, and type follow plat5.com.
+ * Accent is the operator plane's amber so nobody mistakes this console for the customer product.
+ */
+:root {
+  color-scheme: light;
+
+  --ink: #0f1013;
+  --paper: #f2f2ef;
+
+  /* Accent: amber (operator plane) */
+  --accent: #b45309;
+  --accent-hover: #92400e;
+  --accent-text: #9a4a06;
+  --accent-wash: rgb(180 83 9 / 0.1);
+  --on-accent: #fffaf2;
+
+  /* Surfaces */
+  --bg: var(--paper);
+  --surface: #fafaf8;
+  --surface-2: #e9e9e5;
+  --rule: #dadad5;
+  --rule-strong: #c4c4be;
+  --field: #ffffff;
+
+  /* Text */
+  --text: var(--ink);
+  --text-2: #45474d;
+  --muted: #6a6c72;
+
+  /* Functional colors (status uses shape so nothing fights your accent) */
+  --danger: #c93636;
+  --danger-wash: rgb(201 54 54 / 0.08);
+  --warn: #8a5a00;
+  --warn-wash: rgb(180 120 0 / 0.1);
+  --ok: #1f7a4d;
+  --ok-wash: rgb(31 122 77 / 0.09);
+
+  /* Code stays dark on ink in both themes */
+  --code-bg: var(--ink);
+  --code-text: #e6e6e2;
+
+  --font-sans: "Inter Variable", Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo,
+    Consolas, monospace;
+
+  --shadow-pop: 0 1px 0 var(--rule), 0 16px 40px -24px rgb(15 16 19 / 0.35);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --accent: #f59e0b;
+    --accent-hover: #fbbf24;
+    --accent-text: #fbbf24;
+    --accent-wash: rgb(245 158 11 / 0.14);
+    --on-accent: var(--ink);
+    --bg: var(--ink);
+    --surface: #16171b;
+    --surface-2: #1d1f24;
+    --rule: #2a2c31;
+    --rule-strong: #3a3c42;
+    --field: #0f1013;
+    --text: var(--paper);
+    --text-2: #b9bab6;
+    --muted: #8c8e92;
+    --danger: #ff6b6b;
+    --danger-wash: rgb(255 107 107 / 0.12);
+    --warn: #f0b429;
+    --warn-wash: rgb(240 180 41 / 0.12);
+    --ok: #4cc38a;
+    --ok-wash: rgb(76 195 138 / 0.12);
+    --code-bg: #0a0b0d;
+    --shadow-pop: 0 1px 0 var(--rule), 0 16px 40px -20px rgb(0 0 0 / 0.8);
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --accent: #f59e0b;
+  --accent-hover: #fbbf24;
+  --accent-text: #fbbf24;
+  --accent-wash: rgb(245 158 11 / 0.14);
+  --on-accent: var(--ink);
+  --bg: var(--ink);
+  --surface: #16171b;
+  --surface-2: #1d1f24;
+  --rule: #2a2c31;
+  --rule-strong: #3a3c42;
+  --field: #0f1013;
+  --text: var(--paper);
+  --text-2: #b9bab6;
+  --muted: #8c8e92;
+  --danger: #ff6b6b;
+  --danger-wash: rgb(255 107 107 / 0.12);
+  --warn: #f0b429;
+  --warn-wash: rgb(240 180 41 / 0.12);
+  --ok: #4cc38a;
+  --ok-wash: rgb(76 195 138 / 0.12);
+  --code-bg: #0a0b0d;
+  --shadow-pop: 0 1px 0 var(--rule), 0 16px 40px -20px rgb(0 0 0 / 0.8);
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-field: var(--field);
+  --color-rule: var(--rule);
+  --color-rule-strong: var(--rule-strong);
+  --color-text: var(--text);
+  --color-text-2: var(--text-2);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-text: var(--accent-text);
+  --color-accent-wash: var(--accent-wash);
+  --color-on-accent: var(--on-accent);
+  --color-danger: var(--danger);
+  --color-danger-wash: var(--danger-wash);
+  --color-warn: var(--warn);
+  --color-warn-wash: var(--warn-wash);
+  --color-ok: var(--ok);
+  --color-ok-wash: var(--ok-wash);
+  --color-code-bg: var(--code-bg);
+  --color-code-text: var(--code-text);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+  --shadow-pop: var(--shadow-pop);
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: 0.9375rem;
+    line-height: 1.55;
+    font-optical-sizing: auto;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  code,
+  pre {
+    font-family: var(--font-mono);
+    font-variant-ligatures: none;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: var(--accent-wash);
+  }
+}
+
+/* Segmented control sliding indicator (driven by @ui-sdk/solid CSS vars) */
+[data-slot="segmented-control-indicator"] {
+  position: absolute;
+  z-index: 0;
+  top: var(--segmented-control-indicator-top);
+  left: var(--segmented-control-indicator-left);
+  width: var(--segmented-control-indicator-width);
+  height: var(--segmented-control-indicator-height);
+  transition-property: top, left, width, height;
+  transition-duration: 180ms;
+  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+[data-slot="segmented-control-indicator"][data-activation-direction="none"] {
+  transition: none;
+}
+
+/* Collapsible animated height */
+[data-slot="collapsible-panel"] {
+  overflow: hidden;
+  transition: height 180ms cubic-bezier(0.22, 1, 0.36, 1), opacity 160ms ease;
+}
+
+[data-slot="collapsible-panel"][data-starting-style],
+[data-slot="collapsible-panel"][data-ending-style] {
+  height: 0;
+  opacity: 0;
+}
+
+/* Toast region & stacked toasts */
+[data-slot="toast-region"] {
+  width: min(22rem, calc(100vw - 2rem));
+  height: var(--toast-front-height);
+}
+
+[data-slot="toast-region"][data-expanded] {
+  height: calc(var(--toast-stack-height) + (var(--toast-count) - 1) * 10px);
+}
+
+[data-slot="toast"] {
+  --y: calc(var(--toast-index) * -10px);
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: calc(100 - var(--toast-index));
+  height: var(--toast-height);
+  translate: var(--toast-swipe-x, 0px) calc(var(--y) + var(--toast-swipe-y, 0px));
+  scale: calc(1 - var(--toast-index) * 0.04);
+  transition-property: translate, scale, opacity, height;
+  transition-duration: 280ms;
+  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  user-select: none;
+}
+
+[data-slot="toast"]:not([data-front], [data-expanded]) {
+  height: var(--toast-front-height);
+}
+
+[data-slot="toast"][data-expanded] {
+  --y: calc(-1 * (var(--toast-offset) + var(--toast-index) * 10px));
+  scale: 1;
+}
+
+[data-slot="toast"][data-starting-style] {
+  transition: none;
+}
+
+[data-slot="toast"][data-starting-style][data-front] {
+  --y: 100%;
+  opacity: 0;
+}
+
+[data-slot="toast"]:is([data-starting-style]:not([data-front]), [data-ending-style]) {
+  opacity: 0;
+}
+
+[data-slot="toast"][data-swiping] {
+  transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-slot="segmented-control-indicator"],
+  [data-slot="collapsible-panel"],
+  [data-slot="toast"] {
+    transition: none;
+  }
+}

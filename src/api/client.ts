@@ -1,0 +1,109 @@
+// Every call goes to the operator gateway with the operator token. The path names the target.
+import { readSession } from "../auth/session"
+import { config } from "../config"
+
+export type ErrorEnvelope = {
+  error: {
+    type: string
+    code: string
+    message: string
+    request_id: string | null
+    details?: unknown
+  }
+}
+
+export class ApiError extends Error {
+  readonly status: number
+  readonly code: string
+  readonly requestId: string | null
+  readonly body: unknown
+
+  constructor(status: number, message: string, code: string, requestId: string | null, body: unknown) {
+    super(message)
+    this.name = "ApiError"
+    this.status = status
+    this.code = code
+    this.requestId = requestId
+    this.body = body
+  }
+}
+
+/** Whether `err` is the API's error with this `code` (`errors.md` in Plat5's reference). */
+export function hasCode(err: unknown, code: string): err is ApiError {
+  return err instanceof ApiError && err.code === code
+}
+
+export type RawResponse = {
+  status: number
+  requestId: string | null
+  headers: Headers
+  body: unknown
+  text: string
+  ms: number
+}
+
+let onUnauthorized: () => void = () => {}
+
+export function setUnauthorizedHandler(fn: () => void): void {
+  onUnauthorized = fn
+}
+
+/** Sends one request and returns whatever came back. Never throws on HTTP status. */
+export async function send(method: string, target: string, body?: unknown): Promise<RawResponse> {
+  const headers = new Headers({ Accept: "application/json" })
+  const token = readSession()?.accessToken
+  if (token) headers.set("Authorization", `Bearer ${token}`)
+  let payload: string | undefined
+  if (body !== undefined) {
+    headers.set("Content-Type", "application/json")
+    payload = typeof body === "string" ? body : JSON.stringify(body)
+  }
+
+  const start = performance.now()
+  const res = await fetch(`${config.gatewayUrl}${target}`, { method, headers, body: payload })
+  const text = await res.text()
+  const ms = Math.round(performance.now() - start)
+
+  let parsed: unknown = null
+  if (text) {
+    try {
+      parsed = JSON.parse(text)
+    } catch {
+      parsed = null
+    }
+  }
+  if (res.status === 401) onUnauthorized()
+  return { status: res.status, requestId: res.headers.get("X-Request-ID"), headers: res.headers, body: parsed, text, ms }
+}
+
+/** Sends one request and returns the JSON body. Non-2xx throws ApiError. */
+export async function api<T>(method: string, target: string, body?: unknown): Promise<T> {
+  const res = await send(method, target, body)
+  if (res.status >= 200 && res.status < 300) return res.body as T
+  const env = (res.body as ErrorEnvelope | null)?.error
+  throw new ApiError(
+    res.status,
+    env?.message || res.text || `HTTP ${res.status}`,
+    env?.code || "HTTP_ERROR",
+    env?.request_id ?? res.requestId,
+    res.body ?? res.text,
+  )
+}
+
+/** Builds a path with every interpolated value encoded as one segment. */
+export function path(strings: TemplateStringsArray, ...values: string[]): string {
+  return strings.reduce((out, s, i) => out + s + (i < values.length ? encodeURIComponent(values[i]!) : ""), "")
+}
+
+/** A path acting as a member: `/as/{member_id}` before it, on routes with `as_member`.
+ *  No member, the path as it is. */
+export function asMember(memberId: string | null | undefined, p: string): string {
+  return memberId ? path`/as/${memberId}` + p : p
+}
+
+/** Appends `starting_after` cursor parameter to a gateway path. */
+export function withCursor(target: string, after?: string): string {
+  if (!after) return target
+  const sep = target.includes("?") ? "&" : "?"
+  return `${target}${sep}starting_after=${encodeURIComponent(after)}`
+}
