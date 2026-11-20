@@ -16,6 +16,7 @@ const paths = {
   chevronRight: "M6.5 4.5L10 8l-3.5 3.5",
   more: "M3.5 8h.01M8 8h.01M12.5 8h.01",
   edit: "M11 2.5l2.5 2.5-8 8H3v-2.5z",
+  copy: "M5.5 5.5h8v8h-8zM3.5 10.5h-1v-8h8v1",
   external: "M6.5 3.5H3.5v9h9v-3M9.5 2.5h4v4M7.5 8.5l6-6",
 } as const
 

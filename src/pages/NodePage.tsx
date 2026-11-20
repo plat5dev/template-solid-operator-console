@@ -319,117 +319,119 @@ function NodeHeader(props: {
   }
 
   return (
-    <div class="space-y-4">
-      <PageHead
-        crumbs={<NodeCrumbs node={props.node} />}
-        eyebrow={
-          <span class="inline-flex flex-wrap items-center gap-1.5">
-            <span>{props.node.kind}</span>
-            <span>·</span>
-            <Id value={props.node.id} copy />
-          </span>
-        }
-        title={
-          <span class="inline-flex flex-wrap items-center gap-2.5">
-            <span>{props.node.display_name}</span>
-            <Status value={props.node.status} />
-          </span>
-        }
-        actions={
-          <>
-            <Show when={canRename()}>
-              <Button
-                size="sm"
-                onClick={() => {
-                  setError(null)
-                  setDraftName(props.node.display_name)
-                  setRenameOpen(true)
-                }}
-              >
-                Rename
-              </Button>
-            </Show>
-            <Show when={canRestore()}>
-              <Button
-                size="sm"
-                variant="primary"
-                disabled={restoreMutation.isPending}
-                onClick={() => {
-                  setError(null)
-                  void restoreMutation.mutate()
-                }}
-              >
-                {restoreMutation.isPending ? "Restoring…" : "Restore"}
-              </Button>
-            </Show>
-            <Show when={canRelease()}>
-              <Button
-                size="sm"
-                disabled={releaseMutation.isPending}
-                onClick={() => void onReleaseSlug()}
-              >
-                Release slug
-              </Button>
-            </Show>
-            <Show when={canDelete()}>
-              <Button
-                size="sm"
-                variant="danger"
-                onClick={() => {
-                  setError(null)
-                  setConfirmSlug("")
-                  setDeleteOpen(true)
-                }}
-              >
-                Delete {props.node.kind}
-              </Button>
-            </Show>
-          </>
-        }
-      />
-
-      <ErrorAlert error={error()} onDismiss={() => setError(null)} />
-
-      {/* Compact horizontal metadata strip */}
-      <dl class="flex flex-wrap items-center gap-x-6 gap-y-2 rounded-xl border border-rule bg-surface px-4 py-2.5 text-xs">
-        <div class="flex items-center gap-2">
-          <dt class="text-muted">Slug</dt>
-          <dd>
-            <Slug value={props.node.slug} />
-          </dd>
-        </div>
-        <div class="flex items-center gap-2">
-          <dt class="text-muted">Created</dt>
-          <dd class="text-text-2">
-            <When at={props.node.created_at} />
-          </dd>
-        </div>
-        <div class="flex items-center gap-2">
-          <dt class="text-muted">Updated</dt>
-          <dd class="text-text-2">
-            <When at={props.node.updated_at} />
-          </dd>
-        </div>
-        <Show when={props.node.deleted_at}>
-          <div class="flex items-center gap-2">
-            <dt class="text-muted">Deleted</dt>
-            <dd class="text-text-2">
-              <When at={props.node.deleted_at} />
-            </dd>
-          </div>
-        </Show>
-        <Show when={props.node.purge_after}>
-          <div class="flex items-center gap-2">
-            <dt class="text-muted">Purge after</dt>
-            <dd class="text-text-2">
-              <When at={props.node.purge_after} />
-              <Show when={graceExpired()}>
-                <span class="ml-1.5 text-danger">· grace expired</span>
+    <>
+      <div class="space-y-4">
+        <PageHead
+          crumbs={<NodeCrumbs node={props.node} />}
+          eyebrow={
+            <span class="inline-flex flex-wrap items-center gap-1.5">
+              <span>{props.node.kind}</span>
+              <span>·</span>
+              <Id value={props.node.id} copy />
+            </span>
+          }
+          title={
+            <span class="inline-flex flex-wrap items-center gap-2.5">
+              <span>{props.node.display_name}</span>
+              <Status value={props.node.status} />
+            </span>
+          }
+          actions={
+            <>
+              <Show when={canRename()}>
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    setError(null)
+                    setDraftName(props.node.display_name)
+                    setRenameOpen(true)
+                  }}
+                >
+                  Rename
+                </Button>
               </Show>
+              <Show when={canRestore()}>
+                <Button
+                  size="sm"
+                  variant="primary"
+                  disabled={restoreMutation.isPending}
+                  onClick={() => {
+                    setError(null)
+                    void restoreMutation.mutate()
+                  }}
+                >
+                  {restoreMutation.isPending ? "Restoring…" : "Restore"}
+                </Button>
+              </Show>
+              <Show when={canRelease()}>
+                <Button
+                  size="sm"
+                  disabled={releaseMutation.isPending}
+                  onClick={() => void onReleaseSlug()}
+                >
+                  Release slug
+                </Button>
+              </Show>
+              <Show when={canDelete()}>
+                <Button
+                  size="sm"
+                  variant="danger"
+                  onClick={() => {
+                    setError(null)
+                    setConfirmSlug("")
+                    setDeleteOpen(true)
+                  }}
+                >
+                  Delete {props.node.kind}
+                </Button>
+              </Show>
+            </>
+          }
+        />
+
+        <ErrorAlert error={error()} onDismiss={() => setError(null)} />
+
+        {/* Compact horizontal metadata strip */}
+        <dl class="flex flex-wrap items-center gap-x-6 gap-y-2 rounded-xl border border-rule bg-surface px-4 py-2.5 text-xs">
+          <div class="flex items-center gap-2">
+            <dt class="text-muted">Slug</dt>
+            <dd>
+              <Slug value={props.node.slug} />
             </dd>
           </div>
-        </Show>
-      </dl>
+          <div class="flex items-center gap-2">
+            <dt class="text-muted">Created</dt>
+            <dd class="text-text-2">
+              <When at={props.node.created_at} />
+            </dd>
+          </div>
+          <div class="flex items-center gap-2">
+            <dt class="text-muted">Updated</dt>
+            <dd class="text-text-2">
+              <When at={props.node.updated_at} />
+            </dd>
+          </div>
+          <Show when={props.node.deleted_at}>
+            <div class="flex items-center gap-2">
+              <dt class="text-muted">Deleted</dt>
+              <dd class="text-text-2">
+                <When at={props.node.deleted_at} />
+              </dd>
+            </div>
+          </Show>
+          <Show when={props.node.purge_after}>
+            <div class="flex items-center gap-2">
+              <dt class="text-muted">Purge after</dt>
+              <dd class="text-text-2">
+                <When at={props.node.purge_after} />
+                <Show when={graceExpired()}>
+                  <span class="ml-1.5 text-danger">· grace expired</span>
+                </Show>
+              </dd>
+            </div>
+          </Show>
+        </dl>
+      </div>
 
       {/* Rename dialog */}
       <Dialog open={renameOpen()} onOpenChange={setRenameOpen}>
@@ -515,7 +517,7 @@ function NodeHeader(props: {
           </form>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   )
 }
 

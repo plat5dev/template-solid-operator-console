@@ -9,7 +9,7 @@ import { initials } from "./initials"
 import { Avatar } from "./ui/Badge"
 import { Button } from "./ui/Button"
 import { Drawer, DrawerBackdrop, DrawerClose, DrawerContent, DrawerTitle, DrawerTrigger } from "./ui/Drawer"
-import { Menu, MenuContent, MenuGroupLabel, MenuItem, MenuSeparator, MenuTrigger } from "./ui/Menu"
+import { Menu, MenuContent, MenuGroup, MenuGroupLabel, MenuItem, MenuSeparator, MenuTrigger } from "./ui/Menu"
 import { toast } from "./ui/overlays"
 import { SegmentedControl, SegmentedControlItem } from "./ui/SegmentedControl"
 import { Wordmark } from "./Wordmark"
@@ -92,7 +92,7 @@ export function Layout() {
           </Show>
         </div>
 
-        <div class="space-y-3 border-t border-rule pt-3">
+        <div class="flex flex-col gap-3 border-t border-rule pt-3">
           <ThemeSwitch />
 
           <Show
@@ -103,34 +103,46 @@ export function Layout() {
               </Button>
             }
           >
-            <Menu>
-              <MenuTrigger class="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left text-sm text-text-2 transition-colors hover:bg-surface-2 hover:text-text data-open:bg-surface-2 data-open:text-text cursor-pointer">
-                <Avatar text={initials(operatorLabel())} accent />
-                <div class="min-w-0 flex-1">
-                  <div class="truncate text-sm font-medium text-text">{operatorLabel()}</div>
-                  <div class="truncate font-mono text-[0.6875rem] text-muted">{gatewayHost()}</div>
-                </div>
-                <Icon name="chevronUp" class="text-muted" />
-              </MenuTrigger>
+            <div>
+              <Menu>
+                <MenuTrigger class="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left text-sm text-text-2 transition-colors hover:bg-surface-2 hover:text-text data-open:bg-surface-2 data-open:text-text cursor-pointer">
+                  <Avatar text={initials(operatorLabel())} accent />
+                  <div class="min-w-0 flex-1">
+                    <div class="truncate text-sm font-medium text-text">{operatorLabel()}</div>
+                    <div class="truncate font-mono text-[0.6875rem] text-muted">{gatewayHost()}</div>
+                  </div>
+                  <Icon name="chevronUp" class="text-muted" />
+                </MenuTrigger>
 
-              <MenuContent side="top" align="start" class="min-w-60">
-                <MenuGroupLabel>connection</MenuGroupLabel>
-                <MenuItem onSelect={() => void copy("Gateway URL", config.gatewayUrl)}>
-                  <div class="min-w-0 flex-1">
-                    <div class="text-[0.6875rem] text-muted">Gateway</div>
-                    <div class="truncate font-mono text-xs text-text">{config.gatewayUrl}</div>
-                  </div>
-                </MenuItem>
-                <MenuItem onSelect={() => void copy("Issuer URL", config.issuer)}>
-                  <div class="min-w-0 flex-1">
-                    <div class="text-[0.6875rem] text-muted">Issuer</div>
-                    <div class="truncate font-mono text-xs text-text">{config.issuer}</div>
-                  </div>
-                </MenuItem>
-                <MenuSeparator />
-                <MenuItem onSelect={() => logout()}>Sign out</MenuItem>
-              </MenuContent>
-            </Menu>
+                <MenuContent side="top" align="start" class="min-w-60">
+                  <MenuGroup>
+                    <MenuGroupLabel>connection</MenuGroupLabel>
+                    <MenuItem
+                      onSelect={() => void copy("Gateway URL", config.gatewayUrl)}
+                      title="Copy gateway URL"
+                    >
+                      <div class="min-w-0 flex-1">
+                        <div class="text-[0.6875rem] text-muted">Gateway</div>
+                        <div class="truncate font-mono text-xs text-text">{config.gatewayUrl}</div>
+                      </div>
+                      <Icon name="copy" class="h-3.5 w-3.5 text-muted" />
+                    </MenuItem>
+                    <MenuItem
+                      onSelect={() => void copy("Issuer URL", config.issuer)}
+                      title="Copy issuer URL"
+                    >
+                      <div class="min-w-0 flex-1">
+                        <div class="text-[0.6875rem] text-muted">Issuer</div>
+                        <div class="truncate font-mono text-xs text-text">{config.issuer}</div>
+                      </div>
+                      <Icon name="copy" class="h-3.5 w-3.5 text-muted" />
+                    </MenuItem>
+                  </MenuGroup>
+                  <MenuSeparator />
+                  <MenuItem onSelect={() => logout()}>Sign out</MenuItem>
+                </MenuContent>
+              </Menu>
+            </div>
           </Show>
         </div>
       </div>
