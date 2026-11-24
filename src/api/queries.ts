@@ -1,6 +1,6 @@
 import { infiniteQueryOptions, queryOptions } from "@tanstack/solid-query"
 import type { AuditEvent, OperatorAuditEvent } from "./audit"
-import { api, asMember, path, withCursor } from "./client"
+import { api, path, withCursor, type RequestOptions } from "./client"
 import type {
   Binding,
   Invite,
@@ -20,8 +20,13 @@ export type Paged<T> = {
   hasMore: boolean
 }
 
-async function fetchPaged<T>(target: string, collection: string, after?: string): Promise<Paged<T>> {
-  const page = await api<Record<string, unknown>>("GET", withCursor(target, after))
+async function fetchPaged<T>(
+  target: string,
+  collection: string,
+  after?: string,
+  opts?: RequestOptions,
+): Promise<Paged<T>> {
+  const page = await api<Record<string, unknown>>("GET", withCursor(target, after), undefined, opts)
   return {
     items: (page[collection] as T[] | undefined) ?? [],
     hasMore: page.has_more === true,
@@ -87,11 +92,11 @@ export const queries = {
 
   children: (nodeId: string, kind: string, status: NodeStatus, memberId?: string) => {
     const target = memberId
-      ? asMember(memberId, path`/nodes/${nodeId}/children/${kind}`) + (status === "deleted" ? "?status=deleted" : "")
+      ? path`/nodes/${nodeId}/children/${kind}` + (status === "deleted" ? "?status=deleted" : "")
       : `/nodes?parent_id=${encodeURIComponent(nodeId)}&kind=${encodeURIComponent(kind)}&status=${status}`
     return infiniteQueryOptions({
       queryKey: queryKeys.children(nodeId, kind, status, memberId),
-      queryFn: ({ pageParam }) => fetchPaged<Node>(target, "nodes", pageParam),
+      queryFn: ({ pageParam }) => fetchPaged<Node>(target, "nodes", pageParam, { asMember: memberId }),
       initialPageParam: undefined as string | undefined,
       getNextPageParam: nextCursor,
     })
@@ -197,10 +202,10 @@ export const queries = {
   },
 
   tasks: (projectId: string, memberId?: string) => {
-    const target = asMember(memberId, path`/projects/${projectId}/tasks`)
+    const target = path`/projects/${projectId}/tasks`
     return infiniteQueryOptions({
       queryKey: queryKeys.tasks(projectId, memberId),
-      queryFn: ({ pageParam }) => fetchPaged<Task>(target, "tasks", pageParam),
+      queryFn: ({ pageParam }) => fetchPaged<Task>(target, "tasks", pageParam, { asMember: memberId }),
       initialPageParam: undefined as string | undefined,
       getNextPageParam: nextCursor,
     })

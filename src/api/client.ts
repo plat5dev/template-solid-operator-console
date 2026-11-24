@@ -48,11 +48,22 @@ export function setUnauthorizedHandler(fn: () => void): void {
   onUnauthorized = fn
 }
 
+export type RequestOptions = {
+  /** Member id sent in `X-Plat5-As-Member` on routes that allow acting as a member. */
+  asMember?: string | null
+}
+
 /** Sends one request and returns whatever came back. Never throws on HTTP status. */
-export async function send(method: string, target: string, body?: unknown): Promise<RawResponse> {
+export async function send(
+  method: string,
+  target: string,
+  body?: unknown,
+  opts?: RequestOptions,
+): Promise<RawResponse> {
   const headers = new Headers({ Accept: "application/json" })
   const token = readSession()?.accessToken
   if (token) headers.set("Authorization", `Bearer ${token}`)
+  if (opts?.asMember) headers.set("X-Plat5-As-Member", opts.asMember)
   let payload: string | undefined
   if (body !== undefined) {
     headers.set("Content-Type", "application/json")
@@ -77,8 +88,13 @@ export async function send(method: string, target: string, body?: unknown): Prom
 }
 
 /** Sends one request and returns the JSON body. Non-2xx throws ApiError. */
-export async function api<T>(method: string, target: string, body?: unknown): Promise<T> {
-  const res = await send(method, target, body)
+export async function api<T>(
+  method: string,
+  target: string,
+  body?: unknown,
+  opts?: RequestOptions,
+): Promise<T> {
+  const res = await send(method, target, body, opts)
   if (res.status >= 200 && res.status < 300) return res.body as T
   const env = (res.body as ErrorEnvelope | null)?.error
   throw new ApiError(
@@ -93,12 +109,6 @@ export async function api<T>(method: string, target: string, body?: unknown): Pr
 /** Builds a path with every interpolated value encoded as one segment. */
 export function path(strings: TemplateStringsArray, ...values: string[]): string {
   return strings.reduce((out, s, i) => out + s + (i < values.length ? encodeURIComponent(values[i]!) : ""), "")
-}
-
-/** A path acting as a member: `/as/{member_id}` before it, on routes with `as_member`.
- *  No member, the path as it is. */
-export function asMember(memberId: string | null | undefined, p: string): string {
-  return memberId ? path`/as/${memberId}` + p : p
 }
 
 /** Appends `starting_after` cursor parameter to a gateway path. */

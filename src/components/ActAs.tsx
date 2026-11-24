@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/solid-query"
 import { Link, useNavigate } from "@tanstack/solid-router"
 import { createMemo, For, Show } from "solid-js"
-import { asMember } from "../api/client"
 import type { Member, Node } from "../api/identity"
 import { queries } from "../api/queries"
 import { useMemberNames } from "../api/useMemberNames"
@@ -21,7 +20,7 @@ function memberLabel(m: Member): string {
 }
 
 /**
- * Acting as a member on routes that allow `/as/{member_id}/…`.
+ * Acting as a member on routes that accept `X-Plat5-As-Member`.
  * - When active, renders a prominent amber warning banner with a Stop button.
  * - When inactive, renders a searchable Combobox inline in the tab toolbar.
  */
@@ -46,12 +45,13 @@ export function ActAsBanner(props: { node: Node; memberId?: string; at: string }
               >
                 {name() ?? <code class="text-xs">{mid()}</code>}
               </Link>
-              : requests go to <code class="rounded bg-surface-2 px-1 py-0.5 text-xs">/as/{mid()}</code> and the
+              : requests send{" "}
+              <code class="rounded bg-surface-2 px-1 py-0.5 text-xs">X-Plat5-As-Member: {mid()}</code> and the
               service sees that member. Access is still yours.
             </div>
             <Button
               size="sm"
-              onClick={() => void navigate({ to: props.at as never })}
+              onClick={() => void navigate({ to: props.at as never, search: {} as never })}
             >
               Stop acting as
             </Button>
@@ -86,7 +86,7 @@ export function ActAsPicker(props: { node: Node; memberId?: string; at: string }
           value={null}
           onValueChange={(next) => {
             if (typeof next === "string" && next) {
-              void navigate({ to: asMember(next, props.at) as never })
+              void navigate({ to: props.at as never, search: { as: next } as never })
             }
           }}
         >

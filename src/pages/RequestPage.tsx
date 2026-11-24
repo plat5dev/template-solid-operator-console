@@ -15,12 +15,12 @@ const withBody = new Set<string>(["POST", "PUT", "PATCH", "DELETE"])
 
 /**
  * Any method, any path, through the operator gateway with your token.
- * `?method=&path=` prefills the workbench.
+ * `?method=&path=&as=` prefills the workbench.
  */
 export function RequestPage() {
   const location = useLocation()
   const navigate = useNavigate()
-  const search = createMemo(() => location().search as { method?: string; path?: string })
+  const search = createMemo(() => location().search as { method?: string; path?: string; as?: string })
 
   const initialMethod = methods.includes(search().method as (typeof methods)[number])
     ? search().method!
@@ -28,6 +28,7 @@ export function RequestPage() {
 
   const [method, setMethod] = createSignal(initialMethod)
   const [rawTarget, setRawTarget] = createSignal(search().path ?? "/nodes?kind=organization")
+  const [asMemberId, setAsMemberId] = createSignal(search().as ?? "")
   const [body, setBody] = createSignal("")
   const [busy, setBusy] = createSignal(false)
   const [res, setRes] = createSignal<RawResponse | null>(null)
@@ -62,10 +63,15 @@ export function RequestPage() {
       payload = body()
     }
 
-    void navigate({ to: "/request", search: { method: method(), path: target }, replace: true })
+    const member = asMemberId().trim() || undefined
+    void navigate({
+      to: "/request",
+      search: { method: method(), path: target, ...(member ? { as: member } : {}) },
+      replace: true,
+    })
     setBusy(true)
     try {
-      setRes(await send(method(), target, payload))
+      setRes(await send(method(), target, payload, { asMember: member }))
     } catch (err) {
       setError(
         new Error(
@@ -110,7 +116,7 @@ export function RequestPage() {
       <PageHead
         eyebrow="any route"
         title="Request"
-        lede="Send any method and path through the operator gateway with your operator token. Prefix with /as/{member_id} to act as a member where the route allows it."
+        lede="Send any method and path through the operator gateway with your operator token. Set X-Plat5-As-Member to act as a member where the route allows it."
       />
 
       <Card>
@@ -170,6 +176,22 @@ export function RequestPage() {
               <Button type="submit" variant="primary" disabled={busy()}>
                 {busy() ? "Sending…" : "Send"}
               </Button>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2">
+              <label class="font-mono text-xs text-muted whitespace-nowrap" for="as-member-input">
+                X-Plat5-As-Member
+              </label>
+              <Input
+                id="as-member-input"
+                mono
+                value={asMemberId()}
+                onValueChange={setAsMemberId}
+                aria-label="X-Plat5-As-Member header"
+                placeholder="optional member id"
+                spellcheck={false}
+                class="min-w-60 flex-1"
+              />
             </div>
 
             <Show when={withBody.has(method())}>

@@ -12,7 +12,7 @@ export type AppNodeTab = {
   label: string
   /** Console & gateway route pattern (use `$nodeId` for the node's id). */
   routePath: string
-  /** Also mount `/as/$memberId/<routePath>` for acting as a member. */
+  /** Allow `?as=<memberId>` (sent as `X-Plat5-As-Member`) on this tab. */
   asMember?: boolean
   /** Concrete console path for a given node. */
   nodePath: (node: Node) => string

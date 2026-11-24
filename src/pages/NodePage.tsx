@@ -1,8 +1,8 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/solid-query"
-import { Link, useNavigate, useParams } from "@tanstack/solid-router"
+import { Link, useNavigate, useParams, useSearch } from "@tanstack/solid-router"
 import type { JSX } from "@solidjs/web"
 import { createEffect, createMemo, createSignal, For, Match, Show, Switch } from "solid-js"
-import { api, asMember, hasCode, path } from "../api/client"
+import { api, hasCode, path } from "../api/client"
 import {
   writable,
   type Binding,
@@ -93,11 +93,11 @@ export function NodePage(props: { tab?: NodeTab }) {
   const params = useParams({ strict: false }) as () => {
     nodeId?: string
     kind?: string
-    memberId?: string
   }
+  const search = useSearch({ strict: false }) as () => { as?: string }
   const nodeId = () => params().nodeId ?? ""
   const routedKind = () => params().kind
-  const memberId = () => params().memberId
+  const memberId = () => search().as
 
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -543,7 +543,7 @@ function ChildrenTab(props: {
   const [error, setError] = createSignal<unknown>(null)
   const [parentDeleted, setParentDeleted] = createSignal(false)
 
-  // Reset status if acting as a member (purged isn't valid on /as/{member}/children)
+  // Reset status if acting as a member (purged isn't valid when listing children as a member)
   createEffect(
     () => [props.node.id, props.kind, props.memberId] as const,
     ([, , mid]) => {
@@ -568,7 +568,7 @@ function ChildrenTab(props: {
       const body = vars.slug
         ? { display_name: vars.displayName, slug: vars.slug }
         : { display_name: vars.displayName }
-      return api<Node>("POST", asMember(props.memberId, at()), body)
+      return api<Node>("POST", at(), body, { asMember: props.memberId })
     },
     onSuccess: async (created) => {
       setDisplayName("")

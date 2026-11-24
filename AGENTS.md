@@ -10,7 +10,7 @@ An operator-facing starter console for Plat5 APIs, built with Solid 2, TanStack 
 | Runtime `/config.js` wins over `VITE_*` build env; `vite build` fails on missing required vars unless `--mode runtime` | `src/config.ts`, `vite.config.ts`, `docker/config.sh` |
 | Login is OIDC / OAuth 2.0 Authorization Code + PKCE with a public client (`sessionStorage` token) | `src/auth/oidc.ts`, `src/auth/session.ts` |
 | The access token goes to the operator gateway and nowhere else | `src/api/client.ts` |
-| Console paths mirror the operator gateway paths by id (including `/as/{member_id}/…`) | `src/router.tsx`, `src/appTabs.tsx` |
+| Console paths mirror the operator gateway paths by id (`?as=<memberId>` sends `X-Plat5-As-Member`) | `src/router.tsx`, `src/appTabs.tsx` |
 | Errors show the Plat5 envelope and `X-Request-ID` | `src/components/ErrorAlert.tsx` |
 | Purged nodes are read-only via `writable(node)`; refusals branch by error `code`, never status | `src/api/identity.ts`, `src/pages/NodePage.tsx` |
 | `@ui-sdk/core` stays excluded from Vite `optimizeDeps` | `vite.config.ts` |

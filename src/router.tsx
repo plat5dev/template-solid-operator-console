@@ -23,7 +23,7 @@ import { UsersPage } from "./pages/UsersPage"
 const str = (v: unknown): string | undefined => (typeof v === "string" && v ? v : undefined)
 
 // Console paths mirror the operator gateway paths by id.
-// `/as/$memberId/...` acts as that member on routes that allow it.
+// `?as=<memberId>` acts as that member (via `X-Plat5-As-Member`) on routes that allow it.
 const rootRoute = createRootRoute({
   component: () => (
     <AuthProvider>
@@ -73,16 +73,9 @@ const nodeDetailRoute = createRoute({
 const nodeChildrenRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/nodes/$nodeId/children/$kind",
-  component: () => (
-    <RequireAuth>
-      <NodePage tab="children" />
-    </RequireAuth>
-  ),
-})
-
-const asMemberChildrenRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/as/$memberId/nodes/$nodeId/children/$kind",
+  validateSearch: (search: Record<string, unknown>): { as?: string } => ({
+    as: str(search.as),
+  }),
   component: () => (
     <RequireAuth>
       <NodePage tab="children" />
@@ -111,28 +104,20 @@ const nodeTabRoutes = builtinNodeTabs.map((tab) =>
   }),
 )
 
-const appTabRoutes = APP_NODE_TABS.flatMap((t) => {
-  const direct = createRoute({
+const appTabRoutes = APP_NODE_TABS.map((t) =>
+  createRoute({
     getParentRoute: () => rootRoute,
     path: t.routePath,
+    validateSearch: t.asMember
+      ? (search: Record<string, unknown>): { as?: string } => ({ as: str(search.as) })
+      : undefined,
     component: () => (
       <RequireAuth>
         <NodePage tab={t.key} />
       </RequireAuth>
     ),
-  })
-  if (!t.asMember) return [direct]
-  const acting = createRoute({
-    getParentRoute: () => rootRoute,
-    path: `/as/$memberId${t.routePath}`,
-    component: () => (
-      <RequireAuth>
-        <NodePage tab={t.key} />
-      </RequireAuth>
-    ),
-  })
-  return [direct, acting]
-})
+  }),
+)
 
 const memberDetailRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -234,9 +219,10 @@ const operatorLogRoute = createRoute({
 const requestRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/request",
-  validateSearch: (search: Record<string, unknown>): { method?: string; path?: string } => ({
+  validateSearch: (search: Record<string, unknown>): { method?: string; path?: string; as?: string } => ({
     method: str(search.method),
     path: str(search.path),
+    as: str(search.as),
   }),
   component: () => (
     <RequireAuth>
@@ -251,7 +237,6 @@ const routeTree = rootRoute.addChildren([
   nodesRoute,
   nodeDetailRoute,
   nodeChildrenRoute,
-  asMemberChildrenRoute,
   ...nodeTabRoutes,
   ...appTabRoutes,
   memberDetailRoute,
