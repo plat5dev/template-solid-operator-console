@@ -222,6 +222,9 @@ function NodeHeader(props: {
   const [renameOpen, setRenameOpen] = createSignal(false)
   const [draftName, setDraftName] = createSignal("")
 
+  const [tierOpen, setTierOpen] = createSignal(false)
+  const [draftTier, setDraftTier] = createSignal("")
+
   const [deleteOpen, setDeleteOpen] = createSignal(false)
   const [confirmSlug, setConfirmSlug] = createSignal("")
 
@@ -232,6 +235,7 @@ function NodeHeader(props: {
       setError(null)
       setGraceExpired(false)
       setRenameOpen(false)
+      setTierOpen(false)
       setDeleteOpen(false)
       setConfirmSlug("")
     },
@@ -286,7 +290,20 @@ function NodeHeader(props: {
     onError: onWriteError,
   }))
 
+  const tierMutation = useMutation(() => ({
+    mutationFn: (tier: string | null) =>
+      api<Node>("PATCH", base() + "/rate-limit-tier", { rate_limit_tier: tier }),
+    onSuccess: (updated) => {
+      props.onChanged(updated)
+      setTierOpen(false)
+      setError(null)
+      toast.success(updated.rate_limit_tier ? `Rate limit tier set to "${updated.rate_limit_tier}"` : "Rate limit tier cleared")
+    },
+    onError: onWriteError,
+  }))
+
   const canRename = () => writable(props.node)
+  const canSetTier = () => props.node.parent_id === null && writable(props.node)
   const canRestore = () => props.node.status === "deleted" && !graceExpired()
   const canRelease = () =>
     props.node.status === "purged" && props.node.parent_id === null && props.node.slug !== null
@@ -298,6 +315,13 @@ function NodeHeader(props: {
     if (!trimmed) return
     setError(null)
     void renameMutation.mutate(trimmed)
+  }
+
+  function onTierSubmit(e: SubmitEvent) {
+    e.preventDefault()
+    const trimmed = draftTier().trim()
+    setError(null)
+    void tierMutation.mutate(trimmed || null)
   }
 
   function onDeleteSubmit(e: SubmitEvent) {
@@ -411,6 +435,29 @@ function NodeHeader(props: {
               <When at={props.node.updated_at} />
             </dd>
           </div>
+          <Show when={props.node.parent_id === null}>
+            <div class="flex items-center gap-2">
+              <dt class="text-muted">Rate limit tier</dt>
+              <dd class="inline-flex items-center gap-1.5 text-text-2">
+                <Show when={props.node.rate_limit_tier} fallback={<span class="text-muted">default</span>}>
+                  {(tier) => <code class="text-xs text-text">{tier()}</code>}
+                </Show>
+                <Show when={canSetTier()}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setError(null)
+                      setDraftTier(props.node.rate_limit_tier ?? "")
+                      setTierOpen(true)
+                    }}
+                    class="text-accent-text hover:underline underline-offset-2 cursor-pointer"
+                  >
+                    Edit
+                  </button>
+                </Show>
+              </dd>
+            </div>
+          </Show>
           <Show when={props.node.deleted_at}>
             <div class="flex items-center gap-2">
               <dt class="text-muted">Deleted</dt>
@@ -466,6 +513,45 @@ function NodeHeader(props: {
                 }
               >
                 {renameMutation.isPending ? "Saving…" : "Save"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Rate limit tier dialog */}
+      <Dialog open={tierOpen()} onOpenChange={setTierOpen}>
+        <DialogBackdrop />
+        <DialogContent>
+          <form onSubmit={onTierSubmit}>
+            <DialogHeader>
+              <DialogTitle>Rate limit tier</DialogTitle>
+              <DialogDescription>
+                Set an opaque tier name matched against gateway rate-limit policies, or leave blank to clear.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogBody>
+              <ErrorAlert error={error()} onDismiss={() => setError(null)} />
+              <Field name="rate_limit_tier">
+                <FieldLabel>Tier</FieldLabel>
+                <Input
+                  mono
+                  value={draftTier()}
+                  onValueChange={setDraftTier}
+                  maxlength={64}
+                  placeholder="e.g. pro, enterprise (blank to clear)"
+                  autofocus
+                />
+              </Field>
+            </DialogBody>
+            <DialogFooter>
+              <DialogClose>Cancel</DialogClose>
+              <Button
+                type="submit"
+                variant="primary"
+                disabled={tierMutation.isPending || (draftTier().trim() || null) === props.node.rate_limit_tier}
+              >
+                {tierMutation.isPending ? "Saving…" : "Save"}
               </Button>
             </DialogFooter>
           </form>
@@ -757,12 +843,14 @@ function BindingsTab(props: { node: Node; onPurged: () => void }) {
   const ancestorNames = createMemo(() => new Map(props.node.ancestors.map((a) => [a.id, a.display_name])))
 
   const memberItems = createMemo(() =>
-    (membersQuery.isSuccess ? membersQuery.data : []).map((m) => ({
-      value: m.id,
-      label: `${m.name ?? m.id}${m.principal === "service_account" ? " (service account)" : ""}`,
-      keywords: [m.id, m.principal],
-      member: m,
-    })),
+    (membersQuery.isSuccess ? membersQuery.data : [])
+      .filter((m) => m.status === "active")
+      .map((m) => ({
+        value: m.id,
+        label: `${m.name ?? m.id}${m.principal === "service_account" ? " (service account)" : ""}`,
+        keywords: [m.id, m.principal],
+        member: m,
+      })),
   )
 
   const [addOpen, setAddOpen] = createSignal(false)
@@ -817,10 +905,15 @@ function BindingsTab(props: { node: Node; onPurged: () => void }) {
     void addMutation.mutate({ memberId: selectedMemberId(), role: selectedRole() })
   }
 
+  function bindingSubjectLabel(b: Binding): string {
+    if (b.public_principal) return b.public_principal
+    return b.name ?? b.member_id ?? b.group_id ?? b.id
+  }
+
   async function onRemove(b: Binding) {
     const yes = await confirm({
-      title: `Remove ${b.name ?? b.member_id}'s "${b.role}" binding?`,
-      description: `They will lose this direct role on ${props.node.display_name}.`,
+      title: `Remove ${bindingSubjectLabel(b)}'s "${b.role}" binding?`,
+      description: `This direct role on ${props.node.display_name} will be removed.`,
       confirmLabel: "Remove binding",
       danger: true,
     })
@@ -869,9 +962,10 @@ function BindingsTab(props: { node: Node; onPurged: () => void }) {
             <table class="w-full border-collapse text-sm">
               <thead>
                 <tr class="border-b border-rule text-left font-mono text-[0.71875rem] font-medium text-muted">
-                  <th class="px-4 py-2.5 font-medium">member</th>
+                  <th class="px-4 py-2.5 font-medium">subject</th>
                   <th class="px-4 py-2.5 font-medium">role</th>
                   <th class="px-4 py-2.5 font-medium">on</th>
+                  <th class="px-4 py-2.5 font-medium">expires</th>
                   <th class="px-4 py-2.5 font-medium">added</th>
                   <th class="px-4 py-2.5 text-right font-medium" />
                 </tr>
@@ -881,16 +975,43 @@ function BindingsTab(props: { node: Node; onPurged: () => void }) {
                   {(b) => (
                     <tr>
                       <td class="px-4 py-3">
-                        <MemberCell
-                          rootId={props.node.root_id}
-                          id={b.member_id}
-                          name={b.name}
-                          principal={b.principal}
-                        >
-                          <Show when={b.guest}>
-                            <Badge variant="accent">guest</Badge>
-                          </Show>
-                        </MemberCell>
+                        <Switch>
+                          <Match when={b.member_id !== null}>
+                            <MemberCell
+                              rootId={props.node.root_id}
+                              id={b.member_id!}
+                              name={b.name}
+                              principal={b.principal === "service_account" ? "service_account" : "person"}
+                            >
+                              <Show when={b.guest}>
+                                <Badge variant="accent">guest</Badge>
+                              </Show>
+                            </MemberCell>
+                          </Match>
+                          <Match when={b.group_id !== null}>
+                            <div class="flex items-center gap-3">
+                              <Avatar text="GR" square />
+                              <div class="min-w-0">
+                                <div class="flex flex-wrap items-center gap-1.5">
+                                  <span class="font-medium text-text">{b.name ?? "Group"}</span>
+                                  <Badge variant="muted">group</Badge>
+                                </div>
+                                <div class="truncate font-mono text-[0.6875rem] text-muted">{b.group_id}</div>
+                              </div>
+                            </div>
+                          </Match>
+                          <Match when={b.public_principal !== null}>
+                            <div class="flex items-center gap-3">
+                              <Avatar text="*" square accent />
+                              <div class="min-w-0">
+                                <div class="flex flex-wrap items-center gap-1.5">
+                                  <code class="text-xs font-medium text-text">{b.public_principal}</code>
+                                  <Badge variant="accent">public</Badge>
+                                </div>
+                              </div>
+                            </div>
+                          </Match>
+                        </Switch>
                       </td>
                       <td class="px-4 py-3 whitespace-nowrap">
                         <Show
@@ -924,6 +1045,9 @@ function BindingsTab(props: { node: Node; onPurged: () => void }) {
                             {ancestorNames().get(b.node_id) ?? b.node_id}
                           </Link>
                         </Show>
+                      </td>
+                      <td class="px-4 py-3 text-xs text-text-2 whitespace-nowrap">
+                        <When at={b.expires_at} />
                       </td>
                       <td class="px-4 py-3 text-xs text-text-2 whitespace-nowrap">
                         <When at={b.created_at} />
@@ -1404,11 +1528,25 @@ function RolesTab(props: { node: Node }) {
                   <tr>
                     <td class="px-4 py-3 align-top whitespace-nowrap">
                       <div class="flex items-center gap-2">
-                        <code class="text-xs font-medium text-text">{r.slug}</code>
+                        <Show
+                          when={r.display_name && r.display_name !== r.slug}
+                          fallback={<code class="text-xs font-medium text-text">{r.slug}</code>}
+                        >
+                          <span class="font-medium text-text">{r.display_name}</span>
+                        </Show>
+                        <Show when={r.source === "custom"}>
+                          <Badge variant="muted">custom</Badge>
+                        </Show>
                         <Show when={r.slug === rolesQuery.data!.creator_role}>
                           <Badge variant="accent">creator role</Badge>
                         </Show>
                       </div>
+                      <Show when={r.display_name && r.display_name !== r.slug}>
+                        <div class="mt-0.5 font-mono text-[0.6875rem] text-muted">{r.slug}</div>
+                      </Show>
+                      <Show when={r.description}>
+                        <div class="mt-0.5 max-w-xs text-xs text-muted whitespace-normal">{r.description}</div>
+                      </Show>
                     </td>
                     <td class="px-4 py-3">
                       <div class="flex flex-wrap gap-1.5">

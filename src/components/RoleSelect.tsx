@@ -21,7 +21,7 @@ export function RoleSelect(props: {
   ariaLabel?: string
   placeholder?: string
 }) {
-  const items = () => props.roles.map((r) => ({ value: r.slug, label: r.slug }))
+  const items = () => props.roles.map((r) => ({ value: r.slug, label: r.display_name || r.slug }))
 
   return (
     <Select
@@ -40,7 +40,10 @@ export function RoleSelect(props: {
           {(r) => (
             <SelectItem value={r.slug}>
               <div class="min-w-0">
-                <div class="font-medium text-text">{r.slug}</div>
+                <div class="font-medium text-text">
+                  {r.display_name || r.slug}
+                  {r.source === "custom" ? " (custom)" : ""}
+                </div>
                 <div class="truncate font-mono text-[0.6875rem] text-muted">{summary(r)}</div>
               </div>
             </SelectItem>

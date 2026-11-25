@@ -331,7 +331,11 @@ export function AuditLog(props: { base: string; rootId?: string }) {
                         <td class="px-4 py-3 text-xs">
                           <Show
                             when={event.actor.member_id && props.rootId}
-                            fallback={<span class="font-medium text-text">the person</span>}
+                            fallback={
+                              <span class="font-medium text-text">
+                                {event.actor.principal === "anonymous" ? "anonymous" : "the person"}
+                              </span>
+                            }
                           >
                             <Link
                               to="/nodes/$nodeId/members/$memberId"
@@ -343,8 +347,10 @@ export function AuditLog(props: { base: string; rootId?: string }) {
                             </Link>
                           </Show>
                           <div class="mt-0.5 text-[0.71875rem] text-muted">
-                            {event.actor.principal === "service_account" ? "service account" : "person"} ·{" "}
-                            {event.actor.auth_type}
+                            {event.actor.principal === "service_account"
+                              ? "service account"
+                              : event.actor.principal}{" "}
+                            · {event.actor.auth_type}
                           </div>
                         </td>
                         <td class="px-4 py-3 text-xs">
@@ -434,7 +440,12 @@ export function AuditLog(props: { base: string; rootId?: string }) {
                         </DetailRow>
                         <DetailRow label="Actor">
                           <div class="space-y-0.5 text-xs">
-                            <Show when={ev().actor.member_id && props.rootId} fallback={<span>the person</span>}>
+                            <Show
+                              when={ev().actor.member_id && props.rootId}
+                              fallback={
+                                <span>{ev().actor.principal === "anonymous" ? "anonymous" : "the person"}</span>
+                              }
+                            >
                               <Link
                                 to="/nodes/$nodeId/members/$memberId"
                                 params={{ nodeId: props.rootId!, memberId: ev().actor.member_id! }}

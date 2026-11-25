@@ -70,12 +70,14 @@ export function ActAsPicker(props: { node: Node; memberId?: string; at: string }
   }))
 
   const items = createMemo(() =>
-    (membersQuery.isSuccess ? membersQuery.data : []).map((m) => ({
-      value: m.id,
-      label: memberLabel(m),
-      keywords: [m.id, m.principal],
-      member: m,
-    })),
+    (membersQuery.isSuccess ? membersQuery.data : [])
+      .filter((m) => m.status === "active")
+      .map((m) => ({
+        value: m.id,
+        label: memberLabel(m),
+        keywords: [m.id, m.principal],
+        member: m,
+      })),
   )
 
   return (

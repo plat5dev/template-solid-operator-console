@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/solid-query"
 import { Link, useParams } from "@tanstack/solid-router"
 import { createSignal, For, Match, Show, Switch } from "solid-js"
 import { api, hasCode, path } from "../api/client"
-import { writable } from "../api/identity"
+import { writable, type Member } from "../api/identity"
 import { queries, queryKeys } from "../api/queries"
 import { ErrorAlert } from "../components/ErrorAlert"
 import { NodeCrumbs } from "../components/NodeCrumbs"
@@ -32,6 +32,26 @@ export function MemberPage() {
   const rootQuery = useQuery(() => queries.node(nodeId()))
   const memberQuery = useQuery(() => queries.member(nodeId(), memberId()))
   const [error, setError] = createSignal<unknown>(null)
+
+  const statusMutation = useMutation(() => ({
+    mutationFn: (status: "active" | "suspended") =>
+      api<Member>("PATCH", path`/nodes/${nodeId()}/members/${memberId()}/status`, { status }),
+    onSuccess: async (updated) => {
+      queryClient.setQueryData(queryKeys.member(nodeId(), memberId()), updated)
+      setError(null)
+      toast.success(updated.status === "suspended" ? "Member suspended" : "Member reactivated")
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.members(nodeId()) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.membersSample(nodeId()) }),
+      ])
+    },
+    onError: (err) => {
+      if (hasCode(err, "NODE_PURGED")) {
+        void queryClient.invalidateQueries({ queryKey: queryKeys.node(nodeId()) })
+      }
+      setError(err)
+    },
+  }))
 
   const removeMutation = useMutation(() => ({
     mutationFn: () => api("DELETE", path`/nodes/${nodeId()}/members/${memberId()}`),
@@ -75,11 +95,9 @@ export function MemberPage() {
       <Match when={memberQuery.isSuccess}>
         {(() => {
           const m = () => memberQuery.data!
-          const canRemove = () =>
-            m().status === "active" &&
-            m().principal === "person" &&
-            rootQuery.isSuccess &&
-            writable(rootQuery.data)
+          const rootWritable = () => rootQuery.isSuccess && writable(rootQuery.data)
+          const canToggleStatus = () => m().status !== "removed" && rootWritable()
+          const canRemove = () => m().status !== "removed" && m().principal === "person" && rootWritable()
 
           return (
             <>
@@ -93,16 +111,42 @@ export function MemberPage() {
                   </span>
                 }
                 actions={
-                  <Show when={canRemove()}>
-                    <Button
-                      variant="danger"
-                      size="sm"
-                      disabled={removeMutation.isPending}
-                      onClick={() => void onRemove()}
-                    >
-                      Remove member
-                    </Button>
-                  </Show>
+                  <>
+                    <Show when={canToggleStatus() && m().status === "active"}>
+                      <Button
+                        size="sm"
+                        disabled={statusMutation.isPending}
+                        onClick={() => {
+                          setError(null)
+                          void statusMutation.mutate("suspended")
+                        }}
+                      >
+                        Suspend
+                      </Button>
+                    </Show>
+                    <Show when={canToggleStatus() && m().status === "suspended"}>
+                      <Button
+                        size="sm"
+                        disabled={statusMutation.isPending}
+                        onClick={() => {
+                          setError(null)
+                          void statusMutation.mutate("active")
+                        }}
+                      >
+                        Reactivate
+                      </Button>
+                    </Show>
+                    <Show when={canRemove()}>
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        disabled={removeMutation.isPending}
+                        onClick={() => void onRemove()}
+                      >
+                        Remove member
+                      </Button>
+                    </Show>
+                  </>
                 }
               />
 
@@ -132,7 +176,7 @@ export function MemberPage() {
                 </CardBody>
               </Card>
 
-              <Show when={m().status === "active"}>
+              <Show when={m().status !== "removed"}>
                 <AtRoot rootId={nodeId()} memberId={m().id} />
               </Show>
             </>

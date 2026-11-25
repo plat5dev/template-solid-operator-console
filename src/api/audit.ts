@@ -14,8 +14,8 @@ export type AuditEvent = {
     member_id: string | null
     /** Only in a person's own log. */
     user_id: string | null
-    principal: Principal
-    auth_type: "jwt" | "apikey"
+    principal: Principal | "anonymous"
+    auth_type: "jwt" | "apikey" | "anonymous"
     /** null for a JWT. */
     key_id: string | null
   }

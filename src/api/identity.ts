@@ -3,6 +3,10 @@
 
 export type Principal = "person" | "service_account"
 
+export type PublicPrincipal = "all_users" | "all_authenticated_users"
+
+export type BindingPrincipal = Principal | "group" | PublicPrincipal
+
 export type NodeStatus = "active" | "deleted" | "purged"
 
 export type Ancestor = {
@@ -23,6 +27,8 @@ export type Node = {
   slug: string | null
   display_name: string
   status: NodeStatus
+  /** Opaque rate-limit tier name on a root, or `null`. */
+  rate_limit_tier: string | null
   deleted_at: string | null
   /** When a deleted node is purged; it can be restored until then. */
   purge_after: string | null
@@ -39,16 +45,19 @@ export function writable(node: Node): boolean {
   return node.status !== "purged"
 }
 
-/** A role for a member on one node. `inherited` when it sits on an ancestor of the node listed. */
+/** A role for a member, group, or public principal on one node. `inherited` when it sits on an ancestor. */
 export type Binding = {
   id: string
-  member_id: string
+  member_id: string | null
+  group_id: string | null
+  public_principal: PublicPrincipal | null
   node_id: string
   role: string
   inherited: boolean
   guest: boolean
-  principal: Principal
+  principal: BindingPrincipal
   name: string | null
+  expires_at: string | null
   created_at: string
   updated_at: string
 }
@@ -65,8 +74,25 @@ export type Member = {
   id: string
   principal: Principal
   name: string | null
-  status: "active" | "removed"
+  status: "active" | "suspended" | "removed"
   guest: boolean
+}
+
+/** A flat collection of active members within one tree (`GET /nodes/{root_id}/groups`). */
+export type Group = {
+  id: string
+  name: string
+  root_id: string
+  created_at: string
+  updated_at: string
+}
+
+/** A root's security policy (`GET /nodes/{root_id}/security-policy`). */
+export type SecurityPolicy = {
+  allow_personal_keys: boolean
+  allowed_cidrs: string[]
+  required_idp_claims: Record<string, string[]>
+  updated_at: string | null
 }
 
 /** A person, by user id. */
@@ -76,9 +102,14 @@ export type User = {
   status: "active" | "suspended"
 }
 
-/** A role bindable at a node, with its permissions resolved. */
+/** A role bindable at a node (predefined system role or root custom role), with resolved permissions. */
 export type Role = {
+  id?: string
   slug: string
+  display_name?: string
+  description?: string
+  source?: "system" | "custom"
+  bindable_at?: string[]
   permissions: string[]
 }
 
@@ -100,6 +131,10 @@ export type Key = {
   id: string
   name: string
   key_prefix: string
+  allowed_cidrs?: string[]
+  scopes?: string[]
+  allowed_roots?: string[]
+  expires_at?: string | null
   created_at: string
   revoked_at: string | null
 }
