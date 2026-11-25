@@ -1137,6 +1137,7 @@ function MembersTab(props: { node: Node; onPurged: () => void }) {
 
   const items = createMemo(() => (listQuery.isSuccess ? listQuery.data.pages.flatMap((p) => p.items) : []))
   const roles = createMemo(() => (rolesQuery.isSuccess ? rolesQuery.data.roles : []))
+  const externalAuthorizer = () => rolesQuery.isSuccess && roles().length === 0
 
   const [addOpen, setAddOpen] = createSignal(false)
   const [issuer, setIssuer] = createSignal("")
@@ -1145,8 +1146,11 @@ function MembersTab(props: { node: Node; onPurged: () => void }) {
   const [error, setError] = createSignal<unknown>(null)
 
   const addMutation = useMutation(() => ({
-    mutationFn: (vars: { issuer: string; subject: string; role: string }) =>
-      api("POST", base(), { idp: { issuer: vars.issuer, subject: vars.subject }, role: vars.role }),
+    mutationFn: (vars: { issuer: string; subject: string; role?: string }) =>
+      api("POST", base(), {
+        idp: { issuer: vars.issuer, subject: vars.subject },
+        ...(vars.role ? { role: vars.role } : {}),
+      }),
     onSuccess: async () => {
       setSubject("")
       setRole("")
@@ -1166,9 +1170,13 @@ function MembersTab(props: { node: Node; onPurged: () => void }) {
 
   function onAddSubmit(e: SubmitEvent) {
     e.preventDefault()
-    if (!issuer().trim() || !subject().trim() || !role()) return
+    if (!issuer().trim() || !subject().trim() || (!externalAuthorizer() && !role())) return
     setError(null)
-    void addMutation.mutate({ issuer: issuer().trim(), subject: subject().trim(), role: role() })
+    void addMutation.mutate({
+      issuer: issuer().trim(),
+      subject: subject().trim(),
+      role: externalAuthorizer() ? undefined : role(),
+    })
   }
 
   return (
@@ -1252,7 +1260,9 @@ function MembersTab(props: { node: Node; onPurged: () => void }) {
             <DialogHeader>
               <DialogTitle>Add member</DialogTitle>
               <DialogDescription>
-                Resolves the person by IdP link (creating their record if new) and binds a role at this root.
+                {externalAuthorizer()
+                  ? "Resolves the person by IdP link (creating their record if new) and adds them to this tree."
+                  : "Resolves the person by IdP link (creating their record if new) and binds a role at this root."}
               </DialogDescription>
             </DialogHeader>
             <DialogBody>
@@ -1278,17 +1288,19 @@ function MembersTab(props: { node: Node; onPurged: () => void }) {
                   required
                 />
               </Field>
-              <div class="grid gap-1.5">
-                <span class="text-xs font-medium text-text">Role</span>
-                <RoleSelect roles={roles()} value={role()} onChange={setRole} />
-              </div>
+              <Show when={!externalAuthorizer()}>
+                <div class="grid gap-1.5">
+                  <span class="text-xs font-medium text-text">Role</span>
+                  <RoleSelect roles={roles()} value={role()} onChange={setRole} />
+                </div>
+              </Show>
             </DialogBody>
             <DialogFooter>
               <DialogClose>Cancel</DialogClose>
               <Button
                 type="submit"
                 variant="primary"
-                disabled={addMutation.isPending || !issuer().trim() || !subject().trim() || !role()}
+                disabled={addMutation.isPending || !issuer().trim() || !subject().trim() || (!externalAuthorizer() && !role())}
               >
                 {addMutation.isPending ? "Adding…" : "Add member"}
               </Button>
