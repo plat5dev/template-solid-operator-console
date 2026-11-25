@@ -3,9 +3,7 @@
 
 export type Principal = "person" | "service_account"
 
-export type PublicPrincipal = "all_users" | "all_authenticated_users"
-
-export type BindingPrincipal = Principal | "group" | PublicPrincipal
+export type BindingPrincipal = Principal | "group"
 
 export type NodeStatus = "active" | "deleted" | "purged"
 
@@ -45,12 +43,11 @@ export function writable(node: Node): boolean {
   return node.status !== "purged"
 }
 
-/** A role for a member, group, or public principal on one node. `inherited` when it sits on an ancestor. */
+/** A role for a member or group on one node. `inherited` when it sits on an ancestor. */
 export type Binding = {
   id: string
   member_id: string | null
   group_id: string | null
-  public_principal: PublicPrincipal | null
   node_id: string
   role: string
   inherited: boolean
@@ -62,11 +59,13 @@ export type Binding = {
   updated_at: string
 }
 
-/** What a member holds on a node (`GET /nodes/{node_id}/memberships/{member_id}`). `*` is every permission. */
+/** What a member holds on a node (`GET /nodes/{node_id}/memberships/{member_id}`).
+ *  `bindings` and `permissions` are omitted in external `authorizer` mode. `*` is every permission. */
 export type Membership = {
   member_id: string
-  bindings: Binding[]
-  permissions: string[]
+  status: Member["status"]
+  bindings?: Binding[]
+  permissions?: string[]
 }
 
 /** A principal's presence in one tree. `name` is null for a person who hasn't signed in. */

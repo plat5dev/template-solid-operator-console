@@ -906,7 +906,6 @@ function BindingsTab(props: { node: Node; onPurged: () => void }) {
   }
 
   function bindingSubjectLabel(b: Binding): string {
-    if (b.public_principal) return b.public_principal
     return b.name ?? b.member_id ?? b.group_id ?? b.id
   }
 
@@ -997,17 +996,6 @@ function BindingsTab(props: { node: Node; onPurged: () => void }) {
                                   <Badge variant="muted">group</Badge>
                                 </div>
                                 <div class="truncate font-mono text-[0.6875rem] text-muted">{b.group_id}</div>
-                              </div>
-                            </div>
-                          </Match>
-                          <Match when={b.public_principal !== null}>
-                            <div class="flex items-center gap-3">
-                              <Avatar text="*" square accent />
-                              <div class="min-w-0">
-                                <div class="flex flex-wrap items-center gap-1.5">
-                                  <code class="text-xs font-medium text-text">{b.public_principal}</code>
-                                  <Badge variant="accent">public</Badge>
-                                </div>
                               </div>
                             </div>
                           </Match>

@@ -224,39 +224,50 @@ function AtRoot(props: { rootId: string; memberId: string }) {
           <ErrorAlert error={membershipQuery.error} />
         </Match>
         <Match when={membershipQuery.isSuccess}>
-          <Show
-            when={membershipQuery.data!.bindings.length > 0}
-            fallback={
+          <Switch>
+            <Match when={membershipQuery.data!.bindings === undefined}>
+              <EmptyState
+                title="Managed by external authorizer"
+                description="Roles and permissions for this deployment are decided by its external authorizer rather than built-in RBAC bindings."
+              />
+            </Match>
+            <Match when={membershipQuery.data!.bindings!.length === 0}>
               <EmptyState
                 title="No binding at the root"
                 description="Bindings below the root are listed on each node's Bindings tab."
               />
-            }
-          >
-            <Card>
-              <CardHead>
-                <span class="text-xs font-medium text-muted">Effective root access</span>
-              </CardHead>
-              <CardBody>
-                <DetailList>
-                  <DetailRow label="Roles">
-                    <div class="flex flex-wrap gap-1.5">
-                      <For each={membershipQuery.data!.bindings}>
-                        {(b) => <Chip>{b.role}</Chip>}
-                      </For>
-                    </div>
-                  </DetailRow>
-                  <DetailRow label="Permissions">
-                    <div class="flex flex-wrap gap-1.5">
-                      <For each={membershipQuery.data!.permissions}>
-                        {(p) => <Chip>{p}</Chip>}
-                      </For>
-                    </div>
-                  </DetailRow>
-                </DetailList>
-              </CardBody>
-            </Card>
-          </Show>
+            </Match>
+            <Match when={membershipQuery.data!.bindings!.length > 0}>
+              <Card>
+                <CardHead>
+                  <span class="text-xs font-medium text-muted">Effective root access</span>
+                </CardHead>
+                <CardBody>
+                  <DetailList>
+                    <DetailRow label="Roles">
+                      <div class="flex flex-wrap gap-1.5">
+                        <For each={membershipQuery.data!.bindings ?? []}>
+                          {(b) => <Chip>{b.role}</Chip>}
+                        </For>
+                      </div>
+                    </DetailRow>
+                    <DetailRow label="Permissions">
+                      <Show
+                        when={(membershipQuery.data!.permissions?.length ?? 0) > 0}
+                        fallback={<span class="text-xs text-muted">none</span>}
+                      >
+                        <div class="flex flex-wrap gap-1.5">
+                          <For each={membershipQuery.data!.permissions ?? []}>
+                            {(p) => <Chip>{p}</Chip>}
+                          </For>
+                        </div>
+                      </Show>
+                    </DetailRow>
+                  </DetailList>
+                </CardBody>
+              </Card>
+            </Match>
+          </Switch>
         </Match>
       </Switch>
     </section>
