@@ -47,10 +47,10 @@ src/
   appTabs.tsx        your API's domain tabs on a node (Tasks on project by default)
   config.ts          runtime /config.js → VITE_* → dev defaults
   index.css          @layer ui-sdk, Tailwind v4, and amber operator design tokens
-  api/               client.ts, kinds.ts, identity.ts, audit.ts, tasks.ts, endpoints.ts, queries.ts
+  api/               client.ts, kinds.ts, identity.ts, audit.ts, tasks.ts, queries.ts, useMemberNames.ts
   auth/              OIDC/OAuth2 PKCE (oidc.ts), sessionStorage token (session.ts), AuthContext
   components/ui/     styled wrappers around @ui-sdk/solid primitives (Dialog, Drawer, Select, Combobox, Menu, Tabs, SegmentedControl, Collapsible, Toast, AlertDialog)
-  components/        Layout, ErrorAlert, NodeCrumbs, NodeTable, ActAs, KeysTable, AuditLog, AuditDrawer
+  components/        Layout, ErrorAlert, NodeCrumbs, NodeTable, ActAs, KeysTable, AuditLog, auditValues, RoleSelect, RequireAuth, Wordmark
   pages/             HomePage, CallbackPage, NodesPage, NodePage, TasksTab, MemberPage, ServiceAccountPage, UsersPage, UserPage, OperatorLogPage, RequestPage
 ```
 

@@ -1,7 +1,8 @@
 // The starter API's tasks, as routed by the operator gateway under `/services/api`:
-// `GET /services/api/projects/{project_id}/tasks`. Every template-*-api starter serves
-// them, and the operator gateway discovers the `api` service and its routes from Plat5's
-// control plane. With a starter of your own, change this file and src/appTabs.tsx.
+// `GET /services/api/projects/{project_id}/tasks`. The tasks API starters (`go-fiber-api`,
+// `node-fastify-api`, `bun-effect-api`) serve them, and the operator gateway discovers the
+// `api` service and its routes from Plat5's control plane. With another starter (such as
+// `go-topaz-api`) or your own API, change this file and src/appTabs.tsx.
 
 /** The kind whose nodes have tasks. */
 export const tasksKind = "project"
