@@ -1,8 +1,8 @@
 // The two audit logs this console reads through the operator gateway.
 import type { Principal } from "./identity"
 
-/** Plat5's audit log: a node's (`GET /nodes/{node_id}/audit-events`) or a person's
- *  (`GET /users/{user_id}/audit-events`). */
+/** Plat5's audit log: a node's (`GET /services/audit/nodes/{node_id}/audit-events`) or a person's
+ *  (`GET /services/audit/users/{user_id}/audit-events`). */
 export type AuditEvent = {
   id: string
   occurred_at: string
@@ -37,7 +37,7 @@ export type AuditEvent = {
 
 export type Outcome = "pending" | "rejected" | "responded" | "no_response"
 
-/** The operator log (`GET /operator-audit-events`): what operators did through the
+/** The operator log (`GET /services/operator-audit/operator-audit-events`): what operators did through the
  *  operator gateway, this console included. */
 export type OperatorAuditEvent = {
   id: string
@@ -45,13 +45,14 @@ export type OperatorAuditEvent = {
   request_id: string
   actor: { issuer: string; operator_id: string; email: string | null; client_id: string | null }
   acting_as: { member_id: string; principal: Principal } | null
+  reason: string | null
   root_id: string | null
   nodes: { kind: string; id: string }[]
   service: string | null
   method: string
   route: string | null
   params: Record<string, string>
-  /** Set only when no route matched. */
+  /** Set when no route matched (unlisted path or unknown service). */
   path: string | null
   ip: string
   user_agent: string | null

@@ -10,7 +10,7 @@ function reason(body: unknown): string | null {
 
 const hints: Record<number, string> = {
   502: "The service behind the gateway didn't answer.",
-  503: "The gateway's IdP keys, the operator log, identity, or the service behind it is unavailable.",
+  503: "The gateway's IdP keys, authorizer, operator log, identity, or the service behind it is unavailable.",
 }
 
 /** Shows the Plat5 error envelope and X-Request-ID (linked to the operator log). */

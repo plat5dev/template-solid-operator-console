@@ -35,7 +35,7 @@ export function MemberPage() {
 
   const statusMutation = useMutation(() => ({
     mutationFn: (status: "active" | "suspended") =>
-      api<Member>("PATCH", path`/nodes/${nodeId()}/members/${memberId()}/status`, { status }),
+      api<Member>("PATCH", path`/services/identity/nodes/${nodeId()}/members/${memberId()}/status`, { status }),
     onSuccess: async (updated) => {
       queryClient.setQueryData(queryKeys.member(nodeId(), memberId()), updated)
       setError(null)
@@ -54,7 +54,7 @@ export function MemberPage() {
   }))
 
   const removeMutation = useMutation(() => ({
-    mutationFn: () => api("DELETE", path`/nodes/${nodeId()}/members/${memberId()}`),
+    mutationFn: () => api("DELETE", path`/services/identity/nodes/${nodeId()}/members/${memberId()}`),
     onSuccess: async () => {
       setError(null)
       toast.success("Member removed")

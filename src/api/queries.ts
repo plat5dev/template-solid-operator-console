@@ -75,7 +75,7 @@ export const queries = {
   roots: (kind: string, status: NodeStatus | "") => {
     const q = new URLSearchParams({ kind })
     if (status) q.set("status", status)
-    const target = `/nodes?${q}`
+    const target = `/services/identity/nodes?${q}`
     return infiniteQueryOptions({
       queryKey: queryKeys.roots(kind, status),
       queryFn: ({ pageParam }) => fetchPaged<Node>(target, "nodes", pageParam),
@@ -87,13 +87,13 @@ export const queries = {
   node: (nodeId: string) =>
     queryOptions({
       queryKey: queryKeys.node(nodeId),
-      queryFn: () => api<Node>("GET", path`/nodes/${nodeId}`),
+      queryFn: () => api<Node>("GET", path`/services/identity/nodes/${nodeId}`),
     }),
 
   children: (nodeId: string, kind: string, status: NodeStatus, memberId?: string) => {
     const target = memberId
-      ? path`/nodes/${nodeId}/children/${kind}` + (status === "deleted" ? "?status=deleted" : "")
-      : `/nodes?parent_id=${encodeURIComponent(nodeId)}&kind=${encodeURIComponent(kind)}&status=${status}`
+      ? path`/services/identity/nodes/${nodeId}/children/${kind}` + (status === "deleted" ? "?status=deleted" : "")
+      : `/services/identity/nodes?parent_id=${encodeURIComponent(nodeId)}&kind=${encodeURIComponent(kind)}&status=${status}`
     return infiniteQueryOptions({
       queryKey: queryKeys.children(nodeId, kind, status, memberId),
       queryFn: ({ pageParam }) => fetchPaged<Node>(target, "nodes", pageParam, { asMember: memberId }),
@@ -105,11 +105,11 @@ export const queries = {
   roles: (nodeId: string) =>
     queryOptions({
       queryKey: queryKeys.roles(nodeId),
-      queryFn: () => api<RolesList>("GET", path`/nodes/${nodeId}/roles`),
+      queryFn: () => api<RolesList>("GET", path`/services/identity/nodes/${nodeId}/roles`),
     }),
 
   bindings: (nodeId: string) => {
-    const target = path`/nodes/${nodeId}/bindings`
+    const target = path`/services/identity/nodes/${nodeId}/bindings`
     return infiniteQueryOptions({
       queryKey: queryKeys.bindings(nodeId),
       queryFn: ({ pageParam }) => fetchPaged<Binding>(target, "bindings", pageParam),
@@ -119,7 +119,7 @@ export const queries = {
   },
 
   members: (rootId: string) => {
-    const target = path`/nodes/${rootId}/members`
+    const target = path`/services/identity/nodes/${rootId}/members`
     return infiniteQueryOptions({
       queryKey: queryKeys.members(rootId),
       queryFn: ({ pageParam }) => fetchPaged<Member>(target, "members", pageParam),
@@ -133,7 +133,7 @@ export const queries = {
     queryOptions({
       queryKey: queryKeys.membersSample(rootId),
       queryFn: async () => {
-        const res = await api<{ members: Member[] }>("GET", path`/nodes/${rootId}/members` + "?limit=100")
+        const res = await api<{ members: Member[] }>("GET", path`/services/identity/nodes/${rootId}/members` + "?limit=100")
         return res.members ?? []
       },
     }),
@@ -141,24 +141,24 @@ export const queries = {
   member: (rootId: string, memberId: string) =>
     queryOptions({
       queryKey: queryKeys.member(rootId, memberId),
-      queryFn: () => api<Member>("GET", path`/nodes/${rootId}/members/${memberId}`),
+      queryFn: () => api<Member>("GET", path`/services/identity/nodes/${rootId}/members/${memberId}`),
     }),
 
   memberUser: (memberId: string) =>
     queryOptions({
       queryKey: queryKeys.memberUser(memberId),
-      queryFn: () => api<User>("GET", path`/members/${memberId}/user`),
+      queryFn: () => api<User>("GET", path`/services/identity/members/${memberId}/user`),
       retry: false,
     }),
 
   membership: (rootId: string, memberId: string) =>
     queryOptions({
       queryKey: queryKeys.membership(rootId, memberId),
-      queryFn: () => api<Membership>("GET", path`/nodes/${rootId}/memberships/${memberId}`),
+      queryFn: () => api<Membership>("GET", path`/services/identity/nodes/${rootId}/memberships/${memberId}`),
     }),
 
   serviceAccounts: (nodeId: string) => {
-    const target = path`/nodes/${nodeId}/service-accounts`
+    const target = path`/services/identity/nodes/${nodeId}/service-accounts`
     return infiniteQueryOptions({
       queryKey: queryKeys.serviceAccounts(nodeId),
       queryFn: ({ pageParam }) => fetchPaged<ServiceAccount>(target, "service_accounts", pageParam),
@@ -170,7 +170,7 @@ export const queries = {
   serviceAccount: (nodeId: string, saId: string) =>
     queryOptions({
       queryKey: queryKeys.serviceAccount(nodeId, saId),
-      queryFn: () => api<ServiceAccount>("GET", path`/nodes/${nodeId}/service-accounts/${saId}`),
+      queryFn: () => api<ServiceAccount>("GET", path`/services/identity/nodes/${nodeId}/service-accounts/${saId}`),
     }),
 
   keys: (base: string) =>
@@ -182,7 +182,7 @@ export const queries = {
     }),
 
   invites: (nodeId: string) => {
-    const target = path`/nodes/${nodeId}/invites`
+    const target = path`/services/identity/nodes/${nodeId}/invites`
     return infiniteQueryOptions({
       queryKey: queryKeys.invites(nodeId),
       queryFn: ({ pageParam }) => fetchPaged<Invite>(target, "invites", pageParam),
@@ -192,7 +192,7 @@ export const queries = {
   },
 
   auditEvents: (base: string, query: string) => {
-    const target = `${base}/audit-events${query}`
+    const target = `/services/audit${base}/audit-events${query}`
     return infiniteQueryOptions({
       queryKey: queryKeys.auditEvents(base, query),
       queryFn: ({ pageParam }) => fetchPaged<AuditEvent>(target, "audit_events", pageParam),
@@ -202,7 +202,7 @@ export const queries = {
   },
 
   tasks: (projectId: string, memberId?: string) => {
-    const target = path`/projects/${projectId}/tasks`
+    const target = path`/services/api/projects/${projectId}/tasks`
     return infiniteQueryOptions({
       queryKey: queryKeys.tasks(projectId, memberId),
       queryFn: ({ pageParam }) => fetchPaged<Task>(target, "tasks", pageParam, { asMember: memberId }),
@@ -216,7 +216,7 @@ export const queries = {
     return queryOptions({
       queryKey: queryKeys.usersLookup(issuer, subject),
       queryFn: async () => {
-        const res = await api<{ users: User[] }>("GET", `/users?${q}`)
+        const res = await api<{ users: User[] }>("GET", `/services/identity/users?${q}`)
         return res.users ?? []
       },
     })
@@ -225,11 +225,11 @@ export const queries = {
   user: (userId: string) =>
     queryOptions({
       queryKey: queryKeys.user(userId),
-      queryFn: () => api<User>("GET", path`/users/${userId}`),
+      queryFn: () => api<User>("GET", path`/services/identity/users/${userId}`),
     }),
 
   userNodes: (userId: string, deleted: boolean) => {
-    const target = path`/users/${userId}/nodes` + (deleted ? "?status=deleted" : "")
+    const target = path`/services/identity/users/${userId}/nodes` + (deleted ? "?status=deleted" : "")
     return infiniteQueryOptions({
       queryKey: queryKeys.userNodes(userId, deleted),
       queryFn: ({ pageParam }) => fetchPaged<Node>(target, "nodes", pageParam),
@@ -239,7 +239,7 @@ export const queries = {
   },
 
   operatorAudit: (query: string) => {
-    const target = "/operator-audit-events" + (query ? `?${query}` : "")
+    const target = "/services/operator-audit/operator-audit-events" + (query ? `?${query}` : "")
     return infiniteQueryOptions({
       queryKey: queryKeys.operatorAudit(query),
       queryFn: ({ pageParam }) => fetchPaged<OperatorAuditEvent>(target, "audit_events", pageParam),

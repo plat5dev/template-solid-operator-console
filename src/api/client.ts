@@ -49,8 +49,10 @@ export function setUnauthorizedHandler(fn: () => void): void {
 }
 
 export type RequestOptions = {
-  /** Member id sent in `X-Plat5-As-Member` on routes that allow acting as a member. */
+  /** Member id sent in `X-Plat5-As-Member` on node-scoped routes. */
   asMember?: string | null
+  /** Optional justification sent in `X-Plat5-Operator-Reason` (recorded in the operator log and passed to AuthZEN). */
+  reason?: string | null
 }
 
 /** Sends one request and returns whatever came back. Never throws on HTTP status. */
@@ -64,6 +66,7 @@ export async function send(
   const token = readSession()?.accessToken
   if (token) headers.set("Authorization", `Bearer ${token}`)
   if (opts?.asMember) headers.set("X-Plat5-As-Member", opts.asMember)
+  if (opts?.reason) headers.set("X-Plat5-Operator-Reason", opts.reason)
   let payload: string | undefined
   if (body !== undefined) {
     headers.set("Content-Type", "application/json")

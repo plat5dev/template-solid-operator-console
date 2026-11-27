@@ -16,10 +16,11 @@ const taskStatusLabel: Record<TaskStatus, string> = {
   done: "Done",
 }
 
-/** The project's tasks from the starter API (`GET /projects/{project_id}/tasks`).
- *  A 404 means the operator gateway hasn't routed the API's paths yet. */
+/** The project's tasks from the starter API (`GET /services/api/projects/{project_id}/tasks`).
+ *  A 404 means the `api` service isn't reachable through the operator gateway yet. */
 export function TasksTab(props: { node: Node; memberId?: string }) {
   const at = () => path`/projects/${props.node.id}/tasks`
+  const gatewayTarget = () => path`/services/api/projects/${props.node.id}/tasks`
   const listQuery = useInfiniteQuery(() => queries.tasks(props.node.id, props.memberId))
   const items = createMemo(() => (listQuery.isSuccess ? listQuery.data.pages.flatMap((p) => p.items) : []))
 
@@ -45,12 +46,13 @@ export function TasksTab(props: { node: Node; memberId?: string }) {
           fallback={<ErrorAlert error={listQuery.error} />}
         >
           <EmptyState
-            title="Tasks route not configured"
+            title="Tasks service not configured"
             description={
               <>
-                The operator gateway has no route for <code class="text-text">{at()}</code>. Add the API&apos;s{" "}
-                <code class="text-text">routes.operator.yml</code> to the project&apos;s{" "}
-                <code class="text-text">operator.routes.yml</code>.
+                The operator gateway could not route <code class="text-text">{gatewayTarget()}</code>. Check that the{" "}
+                <code class="text-text">api</code> service is configured in <code class="text-text">plat5.yml</code>{" "}
+                (discovered via <code class="text-text">control_plane</code>) or{" "}
+                <code class="text-text">operator.yml</code>.
               </>
             }
           />

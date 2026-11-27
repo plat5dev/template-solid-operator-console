@@ -39,7 +39,7 @@ export function ServiceAccountPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
 
-  const base = () => path`/nodes/${nodeId()}/service-accounts/${saId()}`
+  const base = () => path`/services/identity/nodes/${nodeId()}/service-accounts/${saId()}`
   const nodeQuery = useQuery(() => queries.node(nodeId()))
   const saQuery = useQuery(() => queries.serviceAccount(nodeId(), saId()))
 

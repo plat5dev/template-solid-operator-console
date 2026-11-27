@@ -215,7 +215,7 @@ function NodeHeader(props: {
   onChanged: (n: Node) => void
   onReload: () => void
 }) {
-  const base = () => path`/nodes/${props.node.id}`
+  const base = () => path`/services/identity/nodes/${props.node.id}`
   const [error, setError] = createSignal<unknown>(null)
   const [graceExpired, setGraceExpired] = createSignal(false)
 
@@ -654,7 +654,7 @@ function ChildrenTab(props: {
       const body = vars.slug
         ? { display_name: vars.displayName, slug: vars.slug }
         : { display_name: vars.displayName }
-      return api<Node>("POST", at(), body, { asMember: props.memberId })
+      return api<Node>("POST", `/services/identity${at()}`, body, { asMember: props.memberId })
     },
     onSuccess: async (created) => {
       setDisplayName("")
@@ -828,7 +828,7 @@ function MemberCell(props: {
 /** Every binding effective at this node (direct + inherited), with Add binding dialog. */
 function BindingsTab(props: { node: Node; onPurged: () => void }) {
   const queryClient = useQueryClient()
-  const base = () => path`/nodes/${props.node.id}/bindings`
+  const base = () => path`/services/identity/nodes/${props.node.id}/bindings`
   const canWrite = () => writable(props.node)
 
   const listQuery = useInfiniteQuery(() => queries.bindings(props.node.id))
@@ -1129,7 +1129,7 @@ function BindingsTab(props: { node: Node; onPurged: () => void }) {
 /** A root's members, with Add member dialog (resolves person by IdP issuer + subject). */
 function MembersTab(props: { node: Node; onPurged: () => void }) {
   const queryClient = useQueryClient()
-  const base = () => path`/nodes/${props.node.id}/members`
+  const base = () => path`/services/identity/nodes/${props.node.id}/members`
   const canWrite = () => writable(props.node)
 
   const listQuery = useInfiniteQuery(() => queries.members(props.node.id))
@@ -1384,7 +1384,7 @@ function ServiceAccountsTab(props: { node: Node }) {
 /** Invites on this node: list + revoke only (invite tokens are customer secrets). */
 function InvitesTab(props: { node: Node; onPurged: () => void }) {
   const queryClient = useQueryClient()
-  const base = () => path`/nodes/${props.node.id}/invites`
+  const base = () => path`/services/identity/nodes/${props.node.id}/invites`
   const canWrite = () => writable(props.node)
   const [error, setError] = createSignal<unknown>(null)
 

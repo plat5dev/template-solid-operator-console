@@ -33,7 +33,7 @@ const statuses: [NodeStatus | "", string][] = [
   ["", "Any"],
 ]
 
-/** The roots of every tree (`GET /nodes?kind=&status=`), plus root creation (`POST /roots/{kind}`). */
+/** The roots of every tree (`GET /services/identity/nodes?kind=&status=`), plus root creation (`POST /services/identity/roots/{kind}`). */
 export function NodesPage() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -59,7 +59,7 @@ export function NodesPage() {
 
   const createMutation = useMutation(() => ({
     mutationFn: (name: string) =>
-      api<Node>("POST", `/roots/${encodeURIComponent(kind())}`, { display_name: name }),
+      api<Node>("POST", `/services/identity/roots/${encodeURIComponent(kind())}`, { display_name: name }),
     onSuccess: async (root) => {
       setDisplayName("")
       setError(null)
@@ -94,7 +94,7 @@ export function NodesPage() {
   return (
     <>
       <PageHead
-        eyebrow={`/nodes?kind=${kind()}`}
+        eyebrow={`/services/identity/nodes?kind=${kind()}`}
         title={plural(kind())}
         lede={`Every ${kind()} in this deployment: the roots of its trees.`}
         actions={

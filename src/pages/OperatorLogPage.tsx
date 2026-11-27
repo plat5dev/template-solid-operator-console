@@ -37,6 +37,7 @@ export type OperatorLogSearch = {
   node_id?: string
   operator_id?: string
   acting_as_member_id?: string
+  reason?: string
   service?: string
   route?: string
   request_id?: string
@@ -51,6 +52,7 @@ const FILTER_LABELS: Record<keyof OperatorLogSearch, string> = {
   node_id: "Node",
   operator_id: "Operator",
   acting_as_member_id: "Acting as",
+  reason: "Reason",
   service: "Service",
   route: "Route",
   request_id: "Request ID",
@@ -64,6 +66,7 @@ const FILTER_LABELS: Record<keyof OperatorLogSearch, string> = {
 const ADVANCED_KEYS: (keyof OperatorLogSearch)[] = [
   "operator_id",
   "acting_as_member_id",
+  "reason",
   "route",
   "request_id",
   "created_id",
@@ -86,6 +89,7 @@ function searchToDraft(s: OperatorLogSearch): Record<keyof OperatorLogSearch, st
     node_id: s.node_id ?? "",
     operator_id: s.operator_id ?? "",
     acting_as_member_id: s.acting_as_member_id ?? "",
+    reason: s.reason ?? "",
     service: s.service ?? "",
     route: s.route ?? "",
     request_id: s.request_id ?? "",
@@ -105,7 +109,7 @@ function searchToQuery(s: OperatorLogSearch): string {
   return q.toString()
 }
 
-/** The operator log (`GET /operator-audit-events`): every authenticated call through the operator gateway. */
+/** The operator log (`GET /services/operator-audit/operator-audit-events`): every authenticated call through the operator gateway. */
 export function OperatorLogPage() {
   const location = useLocation()
   const navigate = useNavigate()
@@ -172,7 +176,7 @@ export function OperatorLogPage() {
   return (
     <>
       <PageHead
-        eyebrow="/operator-audit-events"
+        eyebrow="/services/operator-audit/operator-audit-events"
         title="Operator log"
         lede="Every call an operator made through the operator gateway, newest first. Customers' own requests are in each node's and person's audit log."
       />
@@ -288,6 +292,15 @@ export function OperatorLogPage() {
                   mono
                   value={draft().acting_as_member_id}
                   onValueChange={(v) => patch("acting_as_member_id", v)}
+                />
+              </Field>
+              <Field name="op_reason">
+                <FieldLabel>Reason</FieldLabel>
+                <Input
+                  size="sm"
+                  value={draft().reason}
+                  onValueChange={(v) => patch("reason", v)}
+                  placeholder="ticket-1234"
                 />
               </Field>
               <Field name="op_route">
@@ -429,6 +442,9 @@ export function OperatorLogPage() {
                             <code class="text-text-2 break-all">{event.route ?? event.path}</code>
                           </div>
                           <div class="mt-0.5 font-mono text-[0.6875rem] text-muted">{event.request_id}</div>
+                          <Show when={event.reason}>
+                            <div class="mt-0.5 text-[0.71875rem] text-text-2">{event.reason}</div>
+                          </Show>
                         </td>
                         <td class="px-4 py-3 font-mono text-xs text-text-2 whitespace-nowrap">
                           {event.service ?? <span class="text-muted">no route</span>}
@@ -539,6 +555,11 @@ export function OperatorLogPage() {
                               </Show>
                             </DetailRow>
                           )}
+                        </Show>
+                        <Show when={ev().reason}>
+                          <DetailRow label="Reason">
+                            <span class="text-xs text-text break-words">{ev().reason}</span>
+                          </DetailRow>
                         </Show>
                         <Show when={ev().nodes.length > 0}>
                           <DetailRow label="Nodes">

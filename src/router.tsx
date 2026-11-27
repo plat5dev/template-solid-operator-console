@@ -200,6 +200,7 @@ const operatorLogRoute = createRoute({
     node_id: str(search.node_id),
     operator_id: str(search.operator_id),
     acting_as_member_id: str(search.acting_as_member_id),
+    reason: str(search.reason),
     service: str(search.service),
     route: str(search.route),
     request_id: str(search.request_id),
@@ -219,10 +220,13 @@ const operatorLogRoute = createRoute({
 const requestRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/request",
-  validateSearch: (search: Record<string, unknown>): { method?: string; path?: string; as?: string } => ({
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): { method?: string; path?: string; as?: string; reason?: string } => ({
     method: str(search.method),
     path: str(search.path),
     as: str(search.as),
+    reason: str(search.reason),
   }),
   component: () => (
     <RequireAuth>

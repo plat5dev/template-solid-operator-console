@@ -43,7 +43,8 @@ export function UserPage(props: { tab?: UserTab }) {
   const queryClient = useQueryClient()
 
   const activeTab = (): UserTab => props.tab ?? "nodes"
-  const base = () => path`/users/${userId()}`
+  const routeBase = () => path`/users/${userId()}`
+  const apiBase = () => path`/services/identity/users/${userId()}`
   const userQuery = useQuery(() => queries.user(userId()))
 
   const [nameOpen, setNameOpen] = createSignal(false)
@@ -51,7 +52,7 @@ export function UserPage(props: { tab?: UserTab }) {
   const [error, setError] = createSignal<unknown>(null)
 
   const saveNameMutation = useMutation(() => ({
-    mutationFn: (name: string | null) => api<User>("PATCH", base(), { name }),
+    mutationFn: (name: string | null) => api<User>("PATCH", apiBase(), { name }),
     onSuccess: (updated) => {
       queryClient.setQueryData(queryKeys.user(userId()), updated)
       setNameOpen(false)
@@ -62,7 +63,7 @@ export function UserPage(props: { tab?: UserTab }) {
   }))
 
   const statusMutation = useMutation(() => ({
-    mutationFn: (status: User["status"]) => api<User>("PATCH", base() + "/status", { status }),
+    mutationFn: (status: User["status"]) => api<User>("PATCH", apiBase() + "/status", { status }),
     onSuccess: (updated) => {
       queryClient.setQueryData(queryKeys.user(userId()), updated)
       setError(null)
@@ -72,7 +73,7 @@ export function UserPage(props: { tab?: UserTab }) {
   }))
 
   const deleteMutation = useMutation(() => ({
-    mutationFn: () => api("DELETE", base()),
+    mutationFn: () => api("DELETE", apiBase()),
     onSuccess: () => {
       setError(null)
       toast.success("Account deleted")
@@ -206,7 +207,7 @@ export function UserPage(props: { tab?: UserTab }) {
         value={activeTab()}
         onValueChange={(next) => {
           if (next === "nodes" || next === "keys" || next === "audit-events") {
-            void navigate({ to: `${base()}/${next}` as never })
+            void navigate({ to: `${routeBase()}/${next}` as never })
           }
         }}
       >
@@ -222,10 +223,10 @@ export function UserPage(props: { tab?: UserTab }) {
           <UserNodes userId={userId()} />
         </Match>
         <Match when={activeTab() === "keys"}>
-          <KeysTable base={base() + "/keys"} />
+          <KeysTable base={apiBase() + "/keys"} />
         </Match>
         <Match when={activeTab() === "audit-events"}>
-          <AuditLog base={base()} />
+          <AuditLog base={routeBase()} />
         </Match>
       </Switch>
 

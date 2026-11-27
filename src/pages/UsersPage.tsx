@@ -54,7 +54,7 @@ export function UsersPage() {
   return (
     <>
       <PageHead
-        eyebrow="/users"
+        eyebrow="/services/identity/users"
         title="Users"
         lede="People aren't listed in bulk. Look someone up by their IdP issuer and subject, or open directly by user ID."
       />
